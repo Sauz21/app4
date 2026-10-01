@@ -1,30 +1,31 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:app4/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Landing page opens a working focus timer', (tester) async {
     await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(find.text('Start focusing'));
+    await tester.pumpAndSettle();
+    expect(find.text('Your focus session'), findsOneWidget);
+    await tester.tap(find.text('Start session'));
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('24:58'), findsOneWidget);
+    await tester.tap(find.text('Pause'));
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('24:58'), findsOneWidget);
+    await tester.tap(find.text('Reset'));
     await tester.pump();
+    expect(find.text('25:00'), findsOneWidget);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('Landing page fits a phone screen', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MyApp());
+    expect(find.text('Start focusing'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
