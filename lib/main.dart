@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'session_store.dart';
 import 'tree_picker.dart';
+import 'home_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +36,7 @@ class MyApp extends StatelessWidget {
         displayColor: ink,
       ),
     ),
-    home: const LandingPage(),
+    home: const HomeShell(focus: LandingPage()),
   );
 }
 
