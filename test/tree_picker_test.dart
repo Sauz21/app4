@@ -43,9 +43,13 @@ void main() {
     progress.addFocusedTime(const Duration(minutes: 20));
     await tester.pump();
 
-    expect(find.byIcon(Icons.lock_rounded), findsNWidgets(2));
-    final cedarCard = find.byKey(const Key('tree-selector-cedar'));
-    await tester.scrollUntilVisible(cedarCard, 200);
+    expect(
+      find.descendant(
+        of: cedarCard,
+        matching: find.byIcon(Icons.lock_rounded),
+      ),
+      findsNothing,
+    );
     await tester.tap(cedarCard);
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
