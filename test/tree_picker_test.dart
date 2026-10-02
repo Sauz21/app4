@@ -27,8 +27,14 @@ void main() {
     await tester.pump();
 
     expect(find.byIcon(Icons.lock_rounded), findsNWidgets(2));
-    await tester.tap(find.byKey(const Key('tree-selector-cedar')));
-    await tester.pump();
+    final cedarCard = find.byKey(const Key('tree-selector-cedar'));
+    await tester.scrollUntilVisible(cedarCard, 200);
+    await tester.tap(cedarCard);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('start-selected-focus')),
+      200,
+    );
     expect(find.text('Start with Quiet Cedar'), findsOneWidget);
   });
 
