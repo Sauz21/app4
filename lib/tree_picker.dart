@@ -7,13 +7,28 @@ const _teal = Color(0xFF087F70);
 
 /// A tree that can be grown during a focus session.
 class FocusTree {
-  const FocusTree({required this.id, required this.name, required this.unlockAfter, required this.icon, required this.foliageColor, required this.trunkColor});
+  const FocusTree({
+    required this.id,
+    required this.name,
+    required this.unlockAfter,
+    required this.icon,
+    required this.foliageColor,
+    required this.trunkColor,
+    this.accentIcon,
+    this.accentColor,
+    this.backgroundColor,
+    this.showTrunk = true,
+  });
   final String id;
   final String name;
   final Duration unlockAfter;
   final IconData icon;
   final Color foliageColor;
   final Color trunkColor;
+  final IconData? accentIcon;
+  final Color? accentColor;
+  final Color? backgroundColor;
+  final bool showTrunk;
   bool isUnlocked(Duration focusedTime) => focusedTime >= unlockAfter;
 }
 
@@ -22,8 +37,46 @@ class TreeCatalog {
   static const trees = <FocusTree>[
     FocusTree(id: 'sprout', name: 'Focus Sprout', unlockAfter: Duration.zero, icon: Icons.spa_rounded, foliageColor: Color(0xFF64B48E), trunkColor: Color(0xFF9A6A45)),
     FocusTree(id: 'cedar', name: 'Quiet Cedar', unlockAfter: Duration(minutes: 20), icon: Icons.park_rounded, foliageColor: Color(0xFF2D8B72), trunkColor: Color(0xFF795548)),
-    FocusTree(id: 'maple', name: 'Amber Maple', unlockAfter: Duration(minutes: 40), icon: Icons.nature_rounded, foliageColor: Color(0xFFD5844F), trunkColor: Color(0xFF805238)),
-    FocusTree(id: 'pine', name: 'Moon Pine', unlockAfter: Duration(minutes: 60), icon: Icons.forest_rounded, foliageColor: Color(0xFF3D6E80), trunkColor: Color(0xFF654A3B)),
+    FocusTree(id: 'maple', name: 'Amber Maple', unlockAfter: Duration(minutes: 40), icon: Icons.nature_rounded, foliageColor: Color(0xFFD5844F), trunkColor: Color(0xFF805238), showTrunk: false),
+    FocusTree(
+      id: 'moon-tree',
+      name: 'Moon Pine',
+      unlockAfter: Duration(minutes: 60),
+      icon: Icons.park_rounded,
+      foliageColor: Color(0xFF3D6E80),
+      trunkColor: Color(0xFF654A3B),
+      accentIcon: Icons.nightlight_round,
+    ),
+    FocusTree(
+      id: 'willow',
+      name: 'River Willow',
+      unlockAfter: Duration(hours: 2),
+      icon: Icons.park_rounded,
+      foliageColor: Color(0xFF4D9C89),
+      trunkColor: Color(0xFF75553C),
+      backgroundColor: Color(0xFFD7F0F1),
+    ),
+    FocusTree(
+      id: 'blossom',
+      name: 'Blossom Tree',
+      unlockAfter: Duration(hours: 3),
+      icon: Icons.local_florist_rounded,
+      foliageColor: Color(0xFFE08AA6),
+      trunkColor: Color(0xFF865C48),
+      showTrunk: false,
+    ),
+    FocusTree(
+      id: 'redwood',
+      name: 'Sunset Redwood',
+      unlockAfter: Duration(hours: 4),
+      icon: Icons.forest_rounded,
+      foliageColor: Color(0xFFB65F45),
+      trunkColor: Color(0xFF684234),
+      accentIcon: Icons.wb_sunny_rounded,
+      accentColor: Color(0xFFFFD26A),
+      backgroundColor: Color(0xFFF9E1CC),
+      showTrunk: false,
+    ),
   ];
 }
 
@@ -137,10 +190,39 @@ class _TreeArt extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: 70, height: 70,
-    decoration: BoxDecoration(color: (muted ? Colors.blueGrey : tree.foliageColor).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(18)),
+    decoration: BoxDecoration(
+      color:
+          muted
+              ? Colors.blueGrey.withValues(alpha: 0.15)
+              : (tree.backgroundColor ?? tree.foliageColor).withValues(
+                alpha: tree.backgroundColor == null ? 0.15 : 0.8,
+              ),
+      borderRadius: BorderRadius.circular(18),
+    ),
     child: Stack(alignment: Alignment.center, children: [
       Icon(tree.icon, size: 49, color: muted ? Colors.blueGrey : tree.foliageColor),
-      Positioned(bottom: 10, child: Container(width: 8, height: 13, color: muted ? Colors.blueGrey : tree.trunkColor)),
+      if (tree.showTrunk)
+        Positioned(
+          bottom: 10,
+          child: Container(
+            width: 8,
+            height: 13,
+            color: muted ? Colors.blueGrey : tree.trunkColor,
+          ),
+        ),
+      if (tree.accentIcon != null)
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Icon(
+            tree.accentIcon,
+            size: 18,
+            color:
+                muted
+                    ? Colors.blueGrey
+                    : tree.accentColor ?? const Color(0xFFF4D77B),
+          ),
+        ),
     ]),
   );
 }

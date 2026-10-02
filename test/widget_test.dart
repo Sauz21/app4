@@ -8,7 +8,9 @@ void main() {
     await tester.tap(find.text('Start focusing'));
     await tester.pumpAndSettle();
     expect(find.text('Choose your tree'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('start-selected-focus')));
+    final startFocus = find.byKey(const Key('start-selected-focus'));
+    await tester.scrollUntilVisible(startFocus, 200);
+    await tester.tap(startFocus);
     await tester.pumpAndSettle();
     expect(find.text('Your focus session'), findsOneWidget);
     await tester.tap(find.text('Start session'));
