@@ -1,8 +1,20 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() => runApp(const MyApp());
+import 'firebase_options.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final options = DefaultFirebaseOptions.currentPlatform;
+  if (options.apiKey.isEmpty) {
+    debugPrint('No Firebase key: run with --dart-define-from-file=.env');
+  } else {
+    await Firebase.initializeApp(options: options);
+  }
+  runApp(const MyApp());
+}
 
 const ink = Color(0xFF172B35);
 const teal = Color(0xFF087F70);
