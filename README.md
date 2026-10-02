@@ -13,9 +13,10 @@ saved to the cloud, so your progress comes back when you reopen the app.
   1 to 240 minutes, and pause or reset at any time.
 - **Cloud saving** with Cloud Firestore. A finished session stores its minutes
   and finish time. The app reads them back to show total hours and unlock trees.
-- **Task list** that opens after you pick a tree and before the timer starts.
-  Add, check off and delete tasks, then tap Start timer. Tasks live in memory,
-  so they reset when the app restarts.
+- **Task list** in a side panel on the focus timer screen. Tap the checklist
+  icon in the top bar to slide it open, add, check off or delete tasks while the
+  timer keeps running, then close it. Tasks live in memory, so they reset when
+  the app restarts.
 
 ## Getting started
 
@@ -57,7 +58,7 @@ string that starts with `AIza`.
 
 - `lib/main.dart`: app entry, Firebase startup (skipped when there are no keys), and the landing page.
 - `lib/tree_picker.dart`: tree catalog, unlock progress, the tree picker screen, and the focus timer screen.
-- `lib/tasks.dart`: the task list screen shown between the tree picker and the timer.
+- `lib/tasks.dart`: the task list store and the side panel opened from the focus timer.
 - `lib/session_store.dart`: saves finished sessions and reads back total minutes. It does nothing when Firebase isn't set up, so tests run without keys.
 - `lib/firebase_options.dart`: Firebase project config. API keys come from the environment.
 - `test/`: Flutter widget tests.

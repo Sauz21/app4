@@ -148,7 +148,7 @@ class _TreePickerState extends State<TreePicker> {
                 const SizedBox(height: 10),
                 FilledButton.icon(
                   key: const Key('start-selected-focus'),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TasksPage(next: (_) => FocusSession(tree: _selectedTree, progress: progress)))),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FocusSession(tree: _selectedTree, progress: progress))),
                   style: FilledButton.styleFrom(backgroundColor: _teal, padding: const EdgeInsets.symmetric(vertical: 18)),
                   icon: const Icon(Icons.play_arrow_rounded),
                   label: Text('Start with ${_selectedTree.name}'),
@@ -352,7 +352,11 @@ class _FocusSessionState extends State<FocusSession> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Your focus session')),
+    appBar: AppBar(
+      title: const Text('Your focus session'),
+      actions: const [TasksButton()],
+    ),
+    endDrawer: const TasksDrawer(),
     body: SafeArea(
       child: Center(
         child: SingleChildScrollView(

@@ -37,22 +37,33 @@ class TaskStore extends ChangeNotifier {
   }
 }
 
-/// Shown after you pick a tree and before the focus timer. Add, check off and
-/// delete tasks, then continue to the timer built by [next].
-class TasksPage extends StatefulWidget {
-  const TasksPage({super.key, required this.next, this.store});
+/// App bar button that slides the task list in from the right.
+/// Use it in `AppBar(actions: [...])` on a Scaffold that has a [TasksDrawer].
+class TasksButton extends StatelessWidget {
+  const TasksButton({super.key});
 
-  /// Builds the screen to show when the person taps "Start timer".
-  final WidgetBuilder next;
+  @override
+  Widget build(BuildContext context) => IconButton(
+    key: const Key('open-tasks'),
+    tooltip: 'Tasks',
+    icon: const Icon(Icons.checklist_rounded),
+    onPressed: () => Scaffold.of(context).openEndDrawer(),
+  );
+}
+
+/// Side panel with the task list. Use as `Scaffold(endDrawer: TasksDrawer())`.
+/// Swipe it away, tap outside it, or use the close button to collapse it.
+class TasksDrawer extends StatefulWidget {
+  const TasksDrawer({super.key, this.store});
 
   /// Defaults to [TaskStore.shared]. Tests pass their own.
   final TaskStore? store;
 
   @override
-  State<TasksPage> createState() => _TasksPageState();
+  State<TasksDrawer> createState() => _TasksDrawerState();
 }
 
-class _TasksPageState extends State<TasksPage> {
+class _TasksDrawerState extends State<TasksDrawer> {
   final _controller = TextEditingController();
   late final TaskStore _store = widget.store ?? TaskStore.shared;
 
@@ -61,10 +72,6 @@ class _TasksPageState extends State<TasksPage> {
     _controller.clear();
   }
 
-  void _startTimer() => Navigator.of(
-    context,
-  ).pushReplacement(MaterialPageRoute<void>(builder: widget.next));
-
   @override
   void dispose() {
     _controller.dispose();
@@ -72,142 +79,132 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Your tasks')),
-    body: SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: AnimatedBuilder(
-            animation: _store,
-            builder: (context, _) {
-              final tasks = _store.tasks;
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 4),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: const Text(
-                        'What will you work on?',
+  Widget build(BuildContext context) => Drawer(
+    width: 340,
+    child: SafeArea(
+      child: AnimatedBuilder(
+        animation: _store,
+        builder: (context, _) {
+          final tasks = _store.tasks;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 8, 0),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Tasks',
                         style: TextStyle(
-                          fontSize: 26,
+                          fontSize: 24,
                           fontWeight: FontWeight.w800,
                           color: _ink,
                         ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            key: const Key('task-input'),
-                            controller: _controller,
-                            textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => _add(),
-                            decoration: const InputDecoration(
-                              hintText: 'Add a task',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        FilledButton.icon(
-                          key: const Key('add-task'),
-                          onPressed: _add,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: _teal,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 18,
-                            ),
-                          ),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add task'),
-                        ),
-                      ],
+                    IconButton(
+                      key: const Key('close-tasks'),
+                      tooltip: 'Close tasks',
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Scaffold.of(context).closeEndDrawer(),
                     ),
-                  ),
-                  Expanded(
-                    child: tasks.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No tasks yet. Add one, or start the timer.',
-                              style: TextStyle(color: Colors.blueGrey),
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-                            itemCount: tasks.length,
-                            itemBuilder: (context, i) {
-                              final task = tasks[i];
-                              return Padding(
-                                key: ObjectKey(task),
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: task.done
-                                        ? const Color(0xFFE9EEF0)
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: const Color(0xFFD8E1E5),
-                                    ),
-                                  ),
-                                  child: ListTile(
-                                    leading: Checkbox(
-                                      value: task.done,
-                                      activeColor: _teal,
-                                      onChanged: (v) =>
-                                          _store.setDone(task, v ?? false),
-                                    ),
-                                    title: Text(
-                                      task.title,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: task.done
-                                            ? Colors.blueGrey
-                                            : _ink,
-                                        decoration: task.done
-                                            ? TextDecoration.lineThrough
-                                            : null,
-                                      ),
-                                    ),
-                                    trailing: IconButton(
-                                      tooltip: 'Delete task',
-                                      icon: const Icon(Icons.delete_outline),
-                                      onPressed: () => _store.remove(task),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        key: const Key('start-timer'),
-                        onPressed: _startTimer,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: _teal,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        key: const Key('task-input'),
+                        controller: _controller,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _add(),
+                        decoration: const InputDecoration(
+                          hintText: 'Add a task',
+                          isDense: true,
+                          border: OutlineInputBorder(),
                         ),
-                        icon: const Icon(Icons.play_arrow_rounded),
-                        label: const Text('Start timer'),
                       ),
                     ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
+                    const SizedBox(width: 8),
+                    IconButton.filled(
+                      key: const Key('add-task'),
+                      tooltip: 'Add task',
+                      style: IconButton.styleFrom(backgroundColor: _teal),
+                      icon: const Icon(Icons.add),
+                      onPressed: _add,
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: tasks.isEmpty
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Text(
+                            'No tasks yet. Add your first one above.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.blueGrey),
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        itemCount: tasks.length,
+                        itemBuilder: (context, i) {
+                          final task = tasks[i];
+                          return Padding(
+                            key: ObjectKey(task),
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: task.done
+                                    ? const Color(0xFFE9EEF0)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: const Color(0xFFD8E1E5),
+                                ),
+                              ),
+                              child: ListTile(
+                                dense: true,
+                                contentPadding: const EdgeInsets.only(
+                                  left: 4,
+                                  right: 0,
+                                ),
+                                leading: Checkbox(
+                                  value: task.done,
+                                  activeColor: _teal,
+                                  onChanged: (v) =>
+                                      _store.setDone(task, v ?? false),
+                                ),
+                                title: Text(
+                                  task.title,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: task.done ? Colors.blueGrey : _ink,
+                                    decoration: task.done
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                  ),
+                                ),
+                                trailing: IconButton(
+                                  tooltip: 'Delete task',
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: () => _store.remove(task),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     ),
   );

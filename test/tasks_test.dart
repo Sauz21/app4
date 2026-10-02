@@ -3,15 +3,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app4/tasks.dart';
 
 void main() {
-  const emptyMessage = 'No tasks yet. Add one, or start the timer.';
+  const emptyMessage = 'No tasks yet. Add your first one above.';
 
   Widget app(TaskStore store) => MaterialApp(
-    home: TasksPage(store: store, next: (_) => const Text('timer screen')),
+    home: Scaffold(
+      appBar: AppBar(title: const Text('Timer'), actions: const [TasksButton()]),
+      endDrawer: TasksDrawer(store: store),
+      body: const Text('timer body'),
+    ),
   );
+
+  Future<void> openTasks(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('open-tasks')));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('Tasks panel opens and closes', (tester) async {
+    await tester.pumpWidget(app(TaskStore()));
+    expect(find.byKey(const Key('task-input')), findsNothing);
+
+    await openTasks(tester);
+    expect(find.byKey(const Key('task-input')), findsOneWidget);
+    expect(find.text(emptyMessage), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('close-tasks')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('task-input')), findsNothing);
+    expect(find.text('timer body'), findsOneWidget);
+  });
 
   testWidgets('Tasks can be added, checked off and deleted', (tester) async {
     await tester.pumpWidget(app(TaskStore()));
-    expect(find.text(emptyMessage), findsOneWidget);
+    await openTasks(tester);
 
     await tester.enterText(
       find.byKey(const Key('task-input')),
@@ -35,6 +58,7 @@ void main() {
 
   testWidgets('Blank tasks are ignored', (tester) async {
     await tester.pumpWidget(app(TaskStore()));
+    await openTasks(tester);
     await tester.enterText(find.byKey(const Key('task-input')), '   ');
     await tester.tap(find.byKey(const Key('add-task')));
     await tester.pump();
@@ -42,19 +66,14 @@ void main() {
     expect(find.byType(Checkbox), findsNothing);
   });
 
-  testWidgets('Start timer continues to the next screen', (tester) async {
-    await tester.pumpWidget(app(TaskStore()));
-    expect(find.text('timer screen'), findsNothing);
+  testWidgets('Tasks are kept when the panel is reopened', (tester) async {
+    await tester.pumpWidget(app(TaskStore()..add('Read notes')));
+    await openTasks(tester);
+    expect(find.text('Read notes'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('start-timer')));
+    await tester.tap(find.byKey(const Key('close-tasks')));
     await tester.pumpAndSettle();
-    expect(find.text('timer screen'), findsOneWidget);
-    expect(find.byKey(const Key('task-input')), findsNothing);
-  });
-
-  testWidgets('Tasks are kept when the page is reopened', (tester) async {
-    final store = TaskStore()..add('Read notes');
-    await tester.pumpWidget(app(store));
+    await openTasks(tester);
     expect(find.text('Read notes'), findsOneWidget);
   });
 }
