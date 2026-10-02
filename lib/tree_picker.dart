@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'session_store.dart';
+
 const _ink = Color(0xFF172B35);
 const _teal = Color(0xFF087F70);
 
@@ -93,11 +95,21 @@ class StudyProgress extends ChangeNotifier {
     _focusedTime += duration;
     notifyListeners();
   }
+
+  /// Seeds progress once from saved sessions so unlocks survive app restarts.
+  // ponytail: only finished sessions are saved, so partial time from an unfinished session is lost on restart.
+  void restoreFrom(Stream<int> savedMinutes) {
+    savedMinutes.first.then(
+      (minutes) => addFocusedTime(Duration(minutes: minutes)),
+      onError: (Object _) {},
+    );
+  }
 }
 
 class TreePicker extends StatefulWidget {
   const TreePicker({super.key, this.progress});
-  static final StudyProgress _appProgress = StudyProgress();
+  static final StudyProgress _appProgress = StudyProgress()
+    ..restoreFrom(totalMinutes());
   final StudyProgress? progress;
   @override
   State<TreePicker> createState() => _TreePickerState();
@@ -251,7 +263,10 @@ class _FocusSessionState extends State<FocusSession> {
         setState(() {
           seconds--;
           widget.progress.addFocusedTime(const Duration(seconds: 1));
-          if (seconds == 0) timer?.cancel();
+          if (seconds == 0) {
+            timer?.cancel();
+            saveSession(25);
+          }
         });
       });
     });

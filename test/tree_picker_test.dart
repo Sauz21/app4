@@ -43,13 +43,9 @@ void main() {
     progress.addFocusedTime(const Duration(minutes: 20));
     await tester.pump();
 
-    expect(
-      find.descendant(
-        of: cedarCard,
-        matching: find.byIcon(Icons.lock_rounded),
-      ),
-      findsNothing,
-    );
+    expect(find.byIcon(Icons.lock_rounded), findsNWidgets(2));
+    final cedarCard = find.byKey(const Key('tree-selector-cedar'));
+    await tester.scrollUntilVisible(cedarCard, 200);
     await tester.tap(cedarCard);
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
@@ -74,5 +70,11 @@ void main() {
     await tester.tap(find.text('Pause'));
     await tester.pump(const Duration(seconds: 2));
     expect(progress.focusedTime, const Duration(seconds: 2));
+  });
+
+  test('progress restores saved minutes from Firestore', () async {
+    final progress = StudyProgress()..restoreFrom(Stream.value(30));
+    await Future<void>.delayed(Duration.zero);
+    expect(progress.focusedTime, const Duration(minutes: 30));
   });
 }
