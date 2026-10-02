@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'session_store.dart';
 
+import 'tasks.dart';
+
 const _ink = Color(0xFF172B35);
 const _teal = Color(0xFF087F70);
 
@@ -350,7 +352,11 @@ class _FocusSessionState extends State<FocusSession> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Your focus session')),
+    appBar: AppBar(
+      title: const Text('Your focus session'),
+      actions: const [TasksButton()],
+    ),
+    endDrawer: const TasksDrawer(),
     body: SafeArea(
       child: Center(
         child: SingleChildScrollView(

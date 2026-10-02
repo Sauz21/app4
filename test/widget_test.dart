@@ -24,6 +24,34 @@ void main() {
     expect(find.text('25:00'), findsOneWidget);
   });
 
+  testWidgets('Tasks can be managed from the focus timer', (tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.tap(find.text('Start focusing'));
+    await tester.pumpAndSettle();
+    final startFocus = find.byKey(const Key('start-selected-focus'));
+    await tester.scrollUntilVisible(startFocus, 200);
+    await tester.tap(startFocus);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start session'));
+    await tester.pump(const Duration(seconds: 2));
+
+    await tester.tap(find.byKey(const Key('open-tasks')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('task-input')),
+      'Finish timer demo',
+    );
+    await tester.tap(find.byKey(const Key('add-task')));
+    await tester.pump();
+    expect(find.text('Finish timer demo'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('close-tasks')));
+    await tester.pumpAndSettle();
+    expect(find.text('Pause'), findsOneWidget);
+    await tester.tap(find.text('Pause'));
+    await tester.pump();
+  });
+
   testWidgets('Landing page fits a phone screen', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
