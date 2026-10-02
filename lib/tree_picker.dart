@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'session_store.dart';
+
 const _ink = Color(0xFF172B35);
 const _teal = Color(0xFF087F70);
 
@@ -169,7 +171,10 @@ class _FocusSessionState extends State<FocusSession> {
         setState(() {
           seconds--;
           widget.progress.addFocusedTime(const Duration(seconds: 1));
-          if (seconds == 0) timer?.cancel();
+          if (seconds == 0) {
+            timer?.cancel();
+            saveSession(25);
+          }
         });
       });
     });
