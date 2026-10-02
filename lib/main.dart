@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
+import 'tree_picker.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -128,7 +127,7 @@ class LandingPage extends StatelessWidget {
                         FilledButton.icon(
                           onPressed: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) => const FocusSession(),
+                              builder: (_) => const TreePicker(),
                             ),
                           ),
                           style: FilledButton.styleFrom(
@@ -364,82 +363,6 @@ class _Feature extends StatelessWidget {
           ),
         ),
       ],
-    ),
-  );
-}
-
-class FocusSession extends StatefulWidget {
-  const FocusSession({super.key});
-  @override
-  State<FocusSession> createState() => _FocusSessionState();
-}
-
-class _FocusSessionState extends State<FocusSession> {
-  int seconds = 25 * 60;
-  Timer? timer;
-  bool get running => timer?.isActive ?? false;
-
-  void toggle() {
-    if (running) {
-      setState(() => timer?.cancel());
-    } else {
-      if (seconds == 0) seconds = 25 * 60;
-      setState(() {
-        timer = Timer.periodic(const Duration(seconds: 1), (_) {
-          setState(() {
-            seconds--;
-            if (seconds == 0) timer?.cancel();
-          });
-        });
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Your focus session')),
-    body: Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.spa_outlined, size: 52, color: teal),
-            const SizedBox(height: 24),
-            Text(
-              seconds == 0
-                  ? 'Nice work. Take a breath.'
-                  : 'One thing at a time.',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}',
-              style: const TextStyle(fontSize: 76, fontWeight: FontWeight.w300),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: toggle,
-              icon: Icon(running ? Icons.pause : Icons.play_arrow),
-              label: Text(running ? 'Pause' : 'Start session'),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => setState(() {
-                timer?.cancel();
-                seconds = 25 * 60;
-              }),
-              child: const Text('Reset'),
-            ),
-          ],
-        ),
-      ),
     ),
   );
 }
