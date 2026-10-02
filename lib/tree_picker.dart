@@ -248,15 +248,85 @@ class FocusSession extends StatefulWidget {
 }
 
 class _FocusSessionState extends State<FocusSession> {
+  int sessionMinutes = 25;
   int seconds = 25 * 60;
   Timer? timer;
   bool get running => timer?.isActive ?? false;
+
+  Future<void> chooseDuration() async {
+    final formKey = GlobalKey<FormState>();
+    var minutes = sessionMinutes;
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (context) {
+        void applyDuration() {
+          if (!formKey.currentState!.validate()) return;
+          formKey.currentState!.save();
+          Navigator.of(context).pop(minutes);
+        }
+
+        return AlertDialog(
+          title: const Text('Study duration'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (seconds != sessionMinutes * 60 && seconds > 0)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: Text('Changing duration resets this session timer.'),
+                  ),
+                TextFormField(
+                  initialValue: '$sessionMinutes',
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  decoration: const InputDecoration(
+                    labelText: 'Minutes',
+                    helperText: 'Choose 1–240 minutes',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    final number = int.tryParse(value?.trim() ?? '');
+                    return number == null || number < 1 || number > 240
+                        ? 'Enter a whole number from 1 to 240.'
+                        : null;
+                  },
+                  onSaved: (value) => minutes = int.parse(value!.trim()),
+                  onFieldSubmitted: (_) => applyDuration(),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: applyDuration,
+              child: const Text('Set duration'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      timer?.cancel();
+      sessionMinutes = selected;
+      seconds = sessionMinutes * 60;
+    });
+  }
+
   void toggle() {
     if (running) {
       setState(() => timer?.cancel());
       return;
     }
-    if (seconds == 0) seconds = 25 * 60;
+    if (seconds == 0) seconds = sessionMinutes * 60;
     setState(() {
       timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted) return;
@@ -265,32 +335,81 @@ class _FocusSessionState extends State<FocusSession> {
           widget.progress.addFocusedTime(const Duration(seconds: 1));
           if (seconds == 0) {
             timer?.cancel();
-            saveSession(25);
+            saveSession(sessionMinutes);
           }
         });
       });
     });
   }
+
   @override
   void dispose() {
     timer?.cancel();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Your focus session')),
-    body: Center(child: Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        _TreeArt(tree: widget.tree, muted: false), const SizedBox(height: 16),
-        Text(widget.tree.name, style: const TextStyle(color: _teal, fontWeight: FontWeight.w700)), const SizedBox(height: 16),
-        Text(seconds == 0 ? 'Nice work. Take a breath.' : 'One thing at a time.', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)), const SizedBox(height: 24),
-        Text('${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(fontSize: 76, fontWeight: FontWeight.w300)), const SizedBox(height: 24),
-        FilledButton.icon(onPressed: toggle, icon: Icon(running ? Icons.pause : Icons.play_arrow), label: Text(running ? 'Pause' : 'Start session')),
-        const SizedBox(height: 12),
-        TextButton(onPressed: () => setState(() { timer?.cancel(); seconds = 25 * 60; }), child: const Text('Reset')),
-      ]),
-    )),
+    body: SafeArea(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _TreeArt(tree: widget.tree, muted: false),
+              const SizedBox(height: 16),
+              Text(
+                widget.tree.name,
+                style: const TextStyle(
+                  color: _teal,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                seconds == 0
+                    ? 'Nice work. Take a breath.'
+                    : 'One thing at a time.',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextButton.icon(
+                onPressed: running ? null : chooseDuration,
+                icon: const Icon(Icons.timer_outlined),
+                label: Text('Study duration: $sessionMinutes min'),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}',
+                style: const TextStyle(
+                  fontSize: 76,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: toggle,
+                icon: Icon(running ? Icons.pause : Icons.play_arrow),
+                label: Text(running ? 'Pause' : 'Start session'),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => setState(() {
+                  timer?.cancel();
+                  seconds = sessionMinutes * 60;
+                }),
+                child: const Text('Reset'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
   );
 }
 

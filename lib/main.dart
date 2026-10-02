@@ -153,7 +153,7 @@ class LandingPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'One task. 25 minutes. You’ve got this.',
+                          'One task. Your pace. You’ve got this.',
                           style: TextStyle(
                             color: Colors.blueGrey,
                             fontSize: 14,
@@ -205,7 +205,7 @@ class LandingPage extends StatelessWidget {
                       _Feature(
                         Icons.timer_outlined,
                         'Build your rhythm',
-                        'Turn 25 minutes into real progress.',
+                        'Turn your study time into real progress.',
                       ),
                       _Feature(
                         Icons.spa_outlined,
