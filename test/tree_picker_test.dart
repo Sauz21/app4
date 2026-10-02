@@ -3,6 +3,96 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('Focus Sprout has six growth stages at 20% intervals', () {
+    const totalSeconds = 100;
+
+    expect(
+      focusSproutGrowthStage(
+        remainingSeconds: totalSeconds,
+        totalSeconds: totalSeconds,
+      ),
+      0,
+    );
+    expect(
+      focusSproutGrowthStage(remainingSeconds: 81, totalSeconds: totalSeconds),
+      0,
+    );
+    expect(
+      focusSproutGrowthStage(remainingSeconds: 80, totalSeconds: totalSeconds),
+      1,
+    );
+    expect(
+      focusSproutGrowthStage(remainingSeconds: 60, totalSeconds: totalSeconds),
+      2,
+    );
+    expect(
+      focusSproutGrowthStage(remainingSeconds: 40, totalSeconds: totalSeconds),
+      3,
+    );
+    expect(
+      focusSproutGrowthStage(remainingSeconds: 20, totalSeconds: totalSeconds),
+      4,
+    );
+    expect(
+      focusSproutGrowthStage(remainingSeconds: 0, totalSeconds: totalSeconds),
+      5,
+    );
+  });
+
+  testWidgets('Focus Sprout renders the requested growth stage', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: FocusSproutGrowth(stage: 5)),
+    );
+
+    expect(find.byKey(const Key('focus-sprout-stage-6')), findsOneWidget);
+    expect(find.byIcon(Icons.forest_rounded), findsOneWidget);
+  });
+
+  testWidgets('branching stage uses layered leaves and bounces on growth', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: FocusSproutGrowth(stage: 3)),
+    );
+    await tester.pumpWidget(
+      const MaterialApp(home: FocusSproutGrowth(stage: 4)),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byKey(const Key('focus-sprout-stage-5')), findsOneWidget);
+    expect(find.byKey(const Key('layered-leaf-tree')), findsOneWidget);
+    expect(find.byType(ScaleTransition), findsOneWidget);
+  });
+
+  testWidgets('each unlockable tree has a distinct final growth visual', (
+    tester,
+  ) async {
+    for (final tree in TreeCatalog.trees.skip(1)) {
+      await tester.pumpWidget(
+        MaterialApp(home: TreeGrowthArt(tree: tree, stage: 5)),
+      );
+      expect(find.byKey(Key('${tree.id}-growth-stage-6')), findsOneWidget);
+      if (tree.id == 'willow') {
+        expect(find.byKey(const Key('willow-layered-canopy')), findsOneWidget);
+      }
+    }
+  });
+
+  testWidgets('natural branching art replaces diagram icons and forests lose trunks', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(home: TreeGrowthArt(tree: TreeCatalog.trees[1], stage: 4)),
+    );
+    expect(find.byKey(const Key('natural-branching-tree')), findsOneWidget);
+    expect(find.byIcon(Icons.account_tree_rounded), findsNothing);
+
+    await tester.pumpWidget(
+      MaterialApp(home: TreeGrowthArt(tree: TreeCatalog.trees[3], stage: 5)),
+    );
+    expect(find.byKey(const Key('moon-tree-growth-trunk')), findsNothing);
+  });
+
   test('tree unlock thresholds follow the focus-time milestones', () {
     final cedar = TreeCatalog.trees[1];
     final maple = TreeCatalog.trees[2];
@@ -99,11 +189,17 @@ void main() {
     await tester.tap(find.text('Study duration: 25 min'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), '1');
-    await tester.tap(find.text('Set duration'));
+    await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
     expect(find.text('1:00'), findsOneWidget);
 
-    await tester.tap(find.text('Start session'));
+    Future<void> tapTimerControl(String label) async {
+      final control = find.text(label);
+      await tester.ensureVisible(control);
+      await tester.tap(control);
+    }
+
+    await tapTimerControl('Start session');
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('0:58'), findsOneWidget);
     final durationButton = find.widgetWithText(
@@ -111,24 +207,24 @@ void main() {
       'Study duration: 1 min',
     );
     expect(tester.widget<TextButton>(durationButton).onPressed, isNull);
-    await tester.tap(find.text('Pause'));
+    await tapTimerControl('Pause');
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('0:58'), findsOneWidget);
-    await tester.tap(find.text('Reset'));
+    await tapTimerControl('Reset');
     await tester.pump();
     expect(find.text('1:00'), findsOneWidget);
 
-    await tester.tap(find.text('Start session'));
+    await tapTimerControl('Start session');
     await tester.pump(const Duration(minutes: 1));
     expect(find.text('0:00'), findsOneWidget);
     expect(find.text('Nice work. Take a breath.'), findsOneWidget);
     expect(progress.focusedTime, const Duration(seconds: 62));
     await tester.pump(const Duration(seconds: 2));
     expect(progress.focusedTime, const Duration(seconds: 62));
-    await tester.tap(find.text('Start session'));
+    await tapTimerControl('Start session');
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('0:59'), findsOneWidget);
-    await tester.tap(find.text('Pause'));
+    await tapTimerControl('Pause');
   });
 
   testWidgets(
