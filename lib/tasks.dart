@@ -37,18 +37,43 @@ class TaskStore extends ChangeNotifier {
   }
 }
 
-/// App bar button that slides the task list in from the right.
+/// App bar button that slides the task list in from the right. It's a filled,
+/// labeled button that shows how many tasks are still open.
 /// Use it in `AppBar(actions: [...])` on a Scaffold that has a [TasksDrawer].
 class TasksButton extends StatelessWidget {
-  const TasksButton({super.key});
+  const TasksButton({super.key, this.store});
+
+  /// Defaults to [TaskStore.shared]. Tests pass their own.
+  final TaskStore? store;
 
   @override
-  Widget build(BuildContext context) => IconButton(
-    key: const Key('open-tasks'),
-    tooltip: 'Tasks',
-    icon: const Icon(Icons.checklist_rounded),
-    onPressed: () => Scaffold.of(context).openEndDrawer(),
-  );
+  Widget build(BuildContext context) {
+    final taskStore = store ?? TaskStore.shared;
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: AnimatedBuilder(
+        animation: taskStore,
+        builder: (context, _) {
+          final open = taskStore.tasks.where((t) => !t.done).length;
+          return FilledButton.icon(
+            key: const Key('open-tasks'),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+            style: FilledButton.styleFrom(
+              backgroundColor: _teal,
+              foregroundColor: Colors.white,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+            ),
+            icon: const Icon(Icons.checklist_rounded, size: 20),
+            label: Text(
+              open > 0 ? 'Tasks ($open)' : 'Tasks',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 /// Side panel with the task list. Use as `Scaffold(endDrawer: TasksDrawer())`.

@@ -7,7 +7,10 @@ void main() {
 
   Widget app(TaskStore store) => MaterialApp(
     home: Scaffold(
-      appBar: AppBar(title: const Text('Timer'), actions: const [TasksButton()]),
+      appBar: AppBar(
+        title: const Text('Timer'),
+        actions: [TasksButton(store: store)],
+      ),
       endDrawer: TasksDrawer(store: store),
       body: const Text('timer body'),
     ),
@@ -75,5 +78,23 @@ void main() {
     await tester.pumpAndSettle();
     await openTasks(tester);
     expect(find.text('Read notes'), findsOneWidget);
+  });
+
+  testWidgets('Tasks button shows how many tasks are still open', (
+    tester,
+  ) async {
+    final store = TaskStore()
+      ..add('One')
+      ..add('Two');
+    await tester.pumpWidget(app(store));
+    expect(find.text('Tasks (2)'), findsOneWidget);
+
+    store.setDone(store.tasks.first, true);
+    await tester.pump();
+    expect(find.text('Tasks (1)'), findsOneWidget);
+
+    store.setDone(store.tasks.last, true);
+    await tester.pump();
+    expect(find.text('Tasks'), findsOneWidget);
   });
 }
