@@ -1,7 +1,20 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+
+import 'firebase_options.dart';
+import 'session_store.dart';
 import 'tree_picker.dart';
 
-void main() => runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final options = DefaultFirebaseOptions.currentPlatform;
+  if (options.apiKey.isEmpty) {
+    debugPrint('No Firebase key: run with --dart-define-from-file=.env');
+  } else {
+    await Firebase.initializeApp(options: options);
+  }
+  runApp(const MyApp());
+}
 
 const ink = Color(0xFF172B35);
 const teal = Color(0xFF087F70);
@@ -144,6 +157,18 @@ class LandingPage extends StatelessWidget {
                           style: TextStyle(
                             color: Colors.blueGrey,
                             fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        StreamBuilder<int>(
+                          stream: totalMinutes(),
+                          builder: (context, snap) => Text(
+                            '${((snap.data ?? 0) / 60).toStringAsFixed(1)} hours focused so far',
+                            style: const TextStyle(
+                              color: teal,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],

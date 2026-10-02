@@ -41,6 +41,11 @@ jobs:
         with:
           channel: stable
 
+      - name: 🔑 Write Firebase keys from secrets
+        env:
+          FIREBASE_ENV: ${{ secrets.FIREBASE_ENV }}
+        run: printf '%s\n' "$FIREBASE_ENV" > .env
+
       - name: 📥 Get dependencies
         run: flutter pub get
 
@@ -49,7 +54,7 @@ jobs:
 
 
       - name: 🏗️ Build APKs
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define-from-file=.env
 
       - name: 📦 Prepare artifacts
         run: |

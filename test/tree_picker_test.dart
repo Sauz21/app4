@@ -71,4 +71,10 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     expect(progress.focusedTime, const Duration(seconds: 2));
   });
+
+  test('progress restores saved minutes from Firestore', () async {
+    final progress = StudyProgress()..restoreFrom(Stream.value(30));
+    await Future<void>.delayed(Duration.zero);
+    expect(progress.focusedTime, const Duration(minutes: 30));
+  });
 }
