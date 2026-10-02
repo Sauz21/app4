@@ -19,7 +19,9 @@ void main() {
     await tester.tap(find.text('Pause'));
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('24:58'), findsOneWidget);
-    await tester.tap(find.text('Reset'));
+    final reset = find.text('Reset');
+    await tester.ensureVisible(reset);
+    await tester.tap(reset);
     await tester.pump();
     expect(find.text('25:00'), findsOneWidget);
   });
