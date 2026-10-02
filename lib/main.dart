@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
+import 'session_store.dart';
 import 'tree_picker.dart';
 
 Future<void> main() async {
@@ -156,6 +157,18 @@ class LandingPage extends StatelessWidget {
                           style: TextStyle(
                             color: Colors.blueGrey,
                             fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        StreamBuilder<int>(
+                          stream: totalMinutes(),
+                          builder: (context, snap) => Text(
+                            '${((snap.data ?? 0) / 60).toStringAsFixed(1)} hours focused so far',
+                            style: const TextStyle(
+                              color: teal,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
