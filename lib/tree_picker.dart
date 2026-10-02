@@ -42,11 +42,21 @@ class StudyProgress extends ChangeNotifier {
     _focusedTime += duration;
     notifyListeners();
   }
+
+  /// Seeds progress once from saved sessions so unlocks survive app restarts.
+  // ponytail: only finished sessions are saved, so partial time from an unfinished session is lost on restart.
+  void restoreFrom(Stream<int> savedMinutes) {
+    savedMinutes.first.then(
+      (minutes) => addFocusedTime(Duration(minutes: minutes)),
+      onError: (Object _) {},
+    );
+  }
 }
 
 class TreePicker extends StatefulWidget {
   const TreePicker({super.key, this.progress});
-  static final StudyProgress _appProgress = StudyProgress();
+  static final StudyProgress _appProgress = StudyProgress()
+    ..restoreFrom(totalMinutes());
   final StudyProgress? progress;
   @override
   State<TreePicker> createState() => _TreePickerState();
