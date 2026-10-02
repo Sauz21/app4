@@ -12,6 +12,9 @@ void main() {
     await tester.scrollUntilVisible(startFocus, 200);
     await tester.tap(startFocus);
     await tester.pumpAndSettle();
+    expect(find.text('Your tasks'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('start-timer')));
+    await tester.pumpAndSettle();
     expect(find.text('Your focus session'), findsOneWidget);
     await tester.tap(find.text('Start session'));
     await tester.pump(const Duration(seconds: 2));

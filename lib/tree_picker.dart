@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'session_store.dart';
 
+import 'tasks.dart';
+
 const _ink = Color(0xFF172B35);
 const _teal = Color(0xFF087F70);
 
@@ -146,7 +148,7 @@ class _TreePickerState extends State<TreePicker> {
                 const SizedBox(height: 10),
                 FilledButton.icon(
                   key: const Key('start-selected-focus'),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FocusSession(tree: _selectedTree, progress: progress))),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TasksPage(next: (_) => FocusSession(tree: _selectedTree, progress: progress)))),
                   style: FilledButton.styleFrom(backgroundColor: _teal, padding: const EdgeInsets.symmetric(vertical: 18)),
                   icon: const Icon(Icons.play_arrow_rounded),
                   label: Text('Start with ${_selectedTree.name}'),
