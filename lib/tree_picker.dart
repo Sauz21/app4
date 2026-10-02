@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -830,10 +831,15 @@ class FocusSession extends StatefulWidget {
   State<FocusSession> createState() => _FocusSessionState();
 }
 
-class _FocusSessionState extends State<FocusSession> {
+class _FocusSessionState extends State<FocusSession>
+    with SingleTickerProviderStateMixin {
   int sessionMinutes = 25;
   int seconds = 25 * 60;
   Timer? timer;
+  late final AnimationController _confettiController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1500),
+  );
   bool get running => timer?.isActive ?? false;
 
   Future<void> chooseDuration() async {
@@ -899,6 +905,7 @@ class _FocusSessionState extends State<FocusSession> {
     if (!mounted || selected == null) return;
     setState(() {
       timer?.cancel();
+      _confettiController.reset();
       sessionMinutes = selected;
       seconds = sessionMinutes * 60;
     });
@@ -909,7 +916,10 @@ class _FocusSessionState extends State<FocusSession> {
       setState(() => timer?.cancel());
       return;
     }
-    if (seconds == 0) seconds = sessionMinutes * 60;
+    if (seconds == 0) {
+      seconds = sessionMinutes * 60;
+      _confettiController.reset();
+    }
     setState(() {
       timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted) return;
@@ -918,6 +928,7 @@ class _FocusSessionState extends State<FocusSession> {
           widget.progress.addFocusedTime(const Duration(seconds: 1));
           if (seconds == 0) {
             timer?.cancel();
+            _confettiController.forward(from: 0);
             saveSession(sessionMinutes);
           }
         });
@@ -928,6 +939,7 @@ class _FocusSessionState extends State<FocusSession> {
   @override
   void dispose() {
     timer?.cancel();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -939,8 +951,10 @@ class _FocusSessionState extends State<FocusSession> {
     ),
     endDrawer: const TasksDrawer(),
     body: SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
+      child: Stack(
+        children: [
+          Center(
+            child: SingleChildScrollView(
           padding: const EdgeInsets.all(28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -996,16 +1010,73 @@ class _FocusSessionState extends State<FocusSession> {
               TextButton(
                 onPressed: () => setState(() {
                   timer?.cancel();
+                  _confettiController.reset();
                   seconds = sessionMinutes * 60;
                 }),
                 child: const Text('Reset'),
               ),
             ],
+            ),
           ),
-        ),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _confettiController,
+                builder: (context, _) => CustomPaint(
+                  key: const Key('screen-confetti-fall'),
+                  painter: _FallingConfettiPainter(_confettiController.value),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     ),
   );
+}
+
+class _FallingConfettiPainter extends CustomPainter {
+  const _FallingConfettiPainter(this.progress);
+
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0 || progress >= 1) return;
+
+    const colors = <Color>[
+      Color(0xFFFFD16C),
+      Color(0xFFE08AA6),
+      Color(0xFF64B48E),
+      Color(0xFF74C8D7),
+      Color(0xFFF38B5D),
+    ];
+    for (var index = 0; index < 34; index++) {
+      final position = Offset(
+        size.width * (index / 33) +
+            math.sin(progress * math.pi * 2 + index) * 20,
+        -28 - (index % 6) * 16 +
+            progress * (size.height * 0.84 + (index % 5) * size.height * 0.16),
+      );
+      final paint = Paint()..color = colors[index % colors.length];
+      canvas.save();
+      canvas.translate(position.dx, position.dy);
+      canvas.rotate(index * 0.71 + progress * math.pi * 2);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset.zero, width: 7, height: 11),
+          const Radius.circular(2),
+        ),
+        paint,
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FallingConfettiPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 String _durationLabel(Duration duration) {
