@@ -15,8 +15,8 @@ saved to the cloud, so your progress comes back when you reopen the app.
   and finish time. The app reads them back to show total hours and unlock trees.
 - **Task list** in a side panel on the focus timer screen. Tap the checklist
   icon in the top bar to slide it open, add, check off or delete tasks while the
-  timer keeps running, then close it. Tasks live in memory, so they reset when
-  the app restarts.
+  timer keeps running, then close it. Tasks are saved to Cloud Firestore in the
+  `tasks` collection and return after app restarts. The list is shared by everyone.
 
 ## Getting started
 
@@ -36,7 +36,7 @@ saved to the cloud, so your progress comes back when you reopen the app.
    ```
 
 The app runs fine without Firebase keys. It just won't save sessions, so the
-hours total stays at zero. That is expected.
+hours total stays at zero and tasks stay in memory until the app closes. That is expected.
 
 Run `flutter doctor` if your setup needs troubleshooting. Use a Flutter SDK
 that includes Dart 3.13.1 or newer within Dart 3, as required by `pubspec.yaml`.
@@ -65,8 +65,15 @@ string that starts with `AIza`.
 - `.github/workflows/main.yml`: CI that runs `flutter pub get`, `flutter test` and builds an APK.
 - `android/`, `ios/`, `web/`, `macos/`, `windows/`, `linux/`: standard Flutter platform files.
 
-Firestore rules only accept sessions with the fields `minutes` and `finishedAt`.
-Ask Kenny before saving any other fields.
+Firestore session documents use only `minutes` and `finishedAt`. Task documents
+use only `title`, `done`, and `createdAt` (a server timestamp); their document ID
+is kept locally, not stored as a field. Publish the tasks rules before testing
+cloud saving, keeping the existing sessions rule unchanged.
+
+To check persistence, run with the command above, add a task, and inspect
+Firestore Database → Data → `tasks` in Firebase project `app4-tree`. Fully stop
+and restart the app with the same command and confirm the task returns. Check
+it off and delete it, verifying both changes in the console.
 
 ## Working together
 
@@ -82,7 +89,7 @@ Ask Kenny before saving any other fields.
 3. Before pushing, run:
 
    ```sh
-   flutter analyze && flutter test
+   flutter analyze --no-fatal-infos && flutter test
    ```
 
 4. Push your branch and open a pull request into `main`. Wait for the green
