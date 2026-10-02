@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 const _ink = Color(0xFF172B35);
@@ -5,35 +9,126 @@ const _teal = Color(0xFF087F70);
 
 /// A single to-do item.
 class Task {
-  Task(this.title, {this.done = false});
+  Task(this.title, {this.done = false, this.id});
   final String title;
+  final String? id;
   bool done;
 }
 
-/// The task list, kept in memory so it survives between focus sessions
-/// (but resets when the app restarts).
-// Saving tasks to Firestore would need Kenny to update the rules, which only
-// allow 'minutes' and 'finishedAt' on sessions.
+/// Shared Firestore tasks, or an in-memory list when Firebase isn't initialized.
 class TaskStore extends ChangeNotifier {
+  TaskStore() {
+    if (!_ready) return;
+    try {
+      _subscription = _collection.orderBy('createdAt').snapshots().listen((
+        snapshot,
+      ) {
+        if (_disposed) return;
+        final updated = <Task>[];
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          if (data['title'] is String && data['done'] is bool) {
+            updated.add(
+              Task(
+                data['title'] as String,
+                done: data['done'] as bool,
+                id: doc.id,
+              ),
+            );
+          }
+        }
+        tasks
+          ..clear()
+          ..addAll(updated);
+        notifyListeners();
+      }, onError: _reportError);
+    } catch (error) {
+      _reportError(error);
+    }
+  }
+
   static final TaskStore shared = TaskStore();
 
+  bool get _ready => Firebase.apps.isNotEmpty;
+  CollectionReference<Map<String, dynamic>> get _collection =>
+      FirebaseFirestore.instance.collection('tasks');
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _subscription;
+  bool _disposed = false;
+  String? errorMessage;
   final List<Task> tasks = [];
+
+  void _reportError(Object error) {
+    debugPrint('TaskStore: $error');
+    if (_disposed) return;
+    errorMessage =
+        'Could not sync tasks. Check your connection and Firestore rules.';
+    notifyListeners();
+  }
+
+  Future<void> _write(Future<void> Function() action) async {
+    try {
+      await action();
+      if (_disposed) return;
+      errorMessage = null;
+      notifyListeners();
+    } catch (error) {
+      _reportError(error);
+    }
+  }
 
   void add(String title) {
     final trimmed = title.trim();
     if (trimmed.isEmpty) return;
+    if (_ready) {
+      if (trimmed.runes.length > 200) {
+        errorMessage = 'Task titles must be 200 characters or fewer.';
+        notifyListeners();
+        return;
+      }
+      unawaited(
+        _write(() async {
+          await _collection.add({
+            'title': trimmed,
+            'done': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }),
+      );
+      return;
+    }
     tasks.add(Task(trimmed));
     notifyListeners();
   }
 
   void setDone(Task task, bool done) {
+    if (_ready) {
+      if (task.id != null) {
+        unawaited(
+          _write(() => _collection.doc(task.id).update({'done': done})),
+        );
+      }
+      return;
+    }
     task.done = done;
     notifyListeners();
   }
 
   void remove(Task task) {
+    if (_ready) {
+      if (task.id != null) {
+        unawaited(_write(() => _collection.doc(task.id).delete()));
+      }
+      return;
+    }
     tasks.remove(task);
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    unawaited(_subscription?.cancel());
+    super.dispose();
   }
 }
 
@@ -164,6 +259,19 @@ class _TasksDrawerState extends State<TasksDrawer> {
                   ],
                 ),
               ),
+              if (_store.errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    _store.errorMessage!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
               Expanded(
                 child: tasks.isEmpty
                     ? const Center(
