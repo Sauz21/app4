@@ -41,13 +41,10 @@ jobs:
         with:
           channel: stable
 
-      - name: 🔑 Write Firebase config from secrets
+      - name: 🔑 Write Firebase keys from secrets
         env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-          FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART }}
-        run: |
-          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
-          printf '%s' "$FIREBASE_OPTIONS_DART" > lib/firebase_options.dart
+          FIREBASE_ENV: ${{ secrets.FIREBASE_ENV }}
+        run: printf '%s\n' "$FIREBASE_ENV" > .env
 
       - name: 📥 Get dependencies
         run: flutter pub get
@@ -57,7 +54,7 @@ jobs:
 
 
       - name: 🏗️ Build APKs
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define-from-file=.env
 
       - name: 📦 Prepare artifacts
         run: |
