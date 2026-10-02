@@ -1,6 +1,6 @@
-# App 4: Focus Up
+# App 4: Focus
 
-Focus Up is a study timer built with Flutter. Pick a tree, start a focus session,
+Focus is a study timer built with Flutter. Pick a tree, start a focus session,
 and unlock new trees as your total focused time grows. Finished sessions are
 saved to the cloud, so your progress comes back when you reopen the app.
 
@@ -13,8 +13,9 @@ saved to the cloud, so your progress comes back when you reopen the app.
   1 to 240 minutes, and pause or reset at any time.
 - **Cloud saving** with Cloud Firestore. A finished session stores its minutes
   and finish time. The app reads them back to show total hours and unlock trees.
-- **Tasks tab** with a simple to-do list: add, check off and delete tasks.
-  Tasks live in memory, so they reset when the app restarts.
+- **Task list** that opens after you pick a tree and before the timer starts.
+  Add, check off and delete tasks, then tap Start timer. Tasks live in memory,
+  so they reset when the app restarts.
 
 ## Getting started
 
@@ -55,9 +56,8 @@ string that starts with `AIza`.
 ## Project structure
 
 - `lib/main.dart`: app entry, Firebase startup (skipped when there are no keys), and the landing page.
-- `lib/home_shell.dart`: bottom navigation with the Focus and Tasks tabs.
 - `lib/tree_picker.dart`: tree catalog, unlock progress, the tree picker screen, and the focus timer screen.
-- `lib/tasks.dart`: the task list screen.
+- `lib/tasks.dart`: the task list screen shown between the tree picker and the timer.
 - `lib/session_store.dart`: saves finished sessions and reads back total minutes. It does nothing when Firebase isn't set up, so tests run without keys.
 - `lib/firebase_options.dart`: Firebase project config. API keys come from the environment.
 - `test/`: Flutter widget tests.
@@ -65,6 +65,7 @@ string that starts with `AIza`.
 - `android/`, `ios/`, `web/`, `macos/`, `windows/`, `linux/`: standard Flutter platform files.
 
 Firestore rules only accept sessions with the fields `minutes` and `finishedAt`.
+Ask Kenny before saving any other fields.
 
 ## Working together
 
