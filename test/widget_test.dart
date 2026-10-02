@@ -7,6 +7,9 @@ void main() {
     await tester.pumpWidget(const MyApp());
     await tester.tap(find.text('Start focusing'));
     await tester.pumpAndSettle();
+    expect(find.text('Choose your tree'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('start-selected-focus')));
+    await tester.pumpAndSettle();
     expect(find.text('Your focus session'), findsOneWidget);
     await tester.tap(find.text('Start session'));
     await tester.pump(const Duration(seconds: 2));
